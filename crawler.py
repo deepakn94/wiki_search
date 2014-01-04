@@ -37,3 +37,4 @@ if __name__ == '__main__':
         i += 1
         if (i % NUMBER_PER_PAGE == 0):
             indexer.dump_index(reverse_index, ('index_%d.txt' % i))
+            reverse_index = defaultdict(list)
