@@ -1,44 +1,29 @@
-import urllib2
-from bs4 import BeautifulSoup
+import wikipedia
+import indexer
 
-seeds = ['/wiki/Djokovic']
+seeds = ['Djokovic']
 
-# TODO: May need to use the Wikipedia API to extract text from
-# the Wikipedia articles
-
-urls = set()
-visited_urls = set()
+pages = set()
+visited_pages = set()
 
 
-def get_page_content(url):
-    response = urllib2.urlopen(url)
-    html = response.read()
-    response.close()
-    return html
-
-
-def parse_html(html):
-    soup = BeautifulSoup(html)
-    href_tags = soup.find_all(href=True)
-    hrefs = [href_tag.get('href') for href_tag in href_tags]
-    global urls
-    for href in hrefs:
-        if '#' in href:
-            continue
-        if href.startswith('/wiki'):
-            if href not in visited_urls and href not in urls:
-                urls.add(href)
+def get_page_content(page_name):
+    page = wikipedia.page(page_name)
+    global pages
+    for link in page.links:
+        if link not in pages and link not in visited_pages:
+            pages.add(link)
+    return page.content
 
 
 if __name__ == '__main__':
-    global urls
-    global visited_urls
+    wikipedia.set_rate_limiting(True)
     for seed in seeds:
-        urls.add(seed)
-    while urls:
-        href = urls.pop()
-        visited_urls.add(href)
-        url = 'http://en.wikipedia.org%s' % href
-        print 'Visiting %s now...' % url
-        html = get_page_content(url)
-        parse_html(html)
+        pages.add(seed)
+    while pages:
+        page_name = pages.pop()
+        visited_pages.add(page_name)
+        page_content = get_page_content(page_name)
+        text = indexer.parse_document(page_content)
+        print text[:100]
+        print "Just visited page %s..." % page_name
