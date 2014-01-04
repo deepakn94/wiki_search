@@ -1,3 +1,6 @@
+# Debugging index file
+index.txt
+
 *.py[cod]
 
 # C extensions
