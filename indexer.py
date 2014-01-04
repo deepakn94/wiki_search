@@ -14,11 +14,16 @@ def parse_document(text):
 
 
 def construct_reverse_index(tokens, url):
-    i = 0
     reverse_index = defaultdict(list)
+    counts = dict()
     for token in tokens:
-        reverse_index[token].append(url)
-        i += 1
+        if token in counts:
+            counts[token] += 1
+        else:
+            counts[token] = 1
+    for key in counts:
+        reverse_index[key].append((url, counts[key]))
+    del counts
     return reverse_index
 
 
@@ -40,7 +45,10 @@ def dump_index(index, file_name):
     keys = sorted(index.keys())
     with open(file_name, 'w') as f:
         for key in keys:
-            f.write('%s:%s\n' % (key, ','.join(index[key])))
+            pairs = ['%s:%s'.encode('utf-8') % (pair[0], str(pair[1]))
+                     for pair in index[key]]
+            key = key.encode('utf-8')
+            f.write('%s--%s\n' % (key, ','.join(pairs)))
 
 
 def construct_index(file_name):
@@ -48,8 +56,10 @@ def construct_index(file_name):
         index = defaultdict(list)
         for line in f:
             line = line.strip()
-            [key, values] = line.split(':')
+            [key, values] = line.split('--')
             values = values.split(',')
+            values = [(value.split(':')[0], int(value.split(':')[1]))
+                      for value in values]
             index[key].extend(values)
         return index
     return None
@@ -61,7 +71,7 @@ if __name__ == '__main__':
         'Hello there, testing!Test.')
     index1 = construct_reverse_index(tokens, '/wiki/Djokovic')
     tokens = parse_document(
-        'Hi there, I am still testing, will be done soon!!!!!')
+        'Hi there, I am still testing, will be done soon, hi!!!!!')
     index2 = construct_reverse_index(tokens, '/wiki/Nadal')
     merged_index = merge_reverse_indices(index1, index2)
     del index1, index2
