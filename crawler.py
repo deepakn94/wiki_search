@@ -12,12 +12,15 @@ NUMBER_PER_PAGE = 100
 
 
 def get_page_content(page_name):
-    page = wikipedia.page(page_name)
-    global pages
-    for link in page.links:
-        if link not in pages and link not in visited_pages:
-            pages.add(link)
-    return page.content
+    try:
+        page = wikipedia.page(page_name)
+        global pages
+        for link in page.links:
+            if link not in pages and link not in visited_pages:
+                pages.add(link)
+        return page.content
+    except:
+        return None
 
 
 if __name__ == '__main__':
@@ -30,11 +33,14 @@ if __name__ == '__main__':
         page_name = pages.pop()
         visited_pages.add(page_name)
         page_content = get_page_content(page_name)
+        if not page_content:
+            continue
         text = indexer.parse_document(page_content)
         index = indexer.construct_reverse_index(text, page_name)
         reverse_index = indexer.merge_reverse_indices(reverse_index, index)
         print "Just visited page %s (%dth page)..." % (page_name, (i + 1))
         i += 1
         if (i % NUMBER_PER_PAGE == 0):
-            indexer.dump_index(reverse_index, ('index_%d.txt' % i))
+            indexer.dump_index(
+                reverse_index, ('indices/index_%d.txt' % (i / NUMBER_PER_PAGE)))
             reverse_index = defaultdict(list)

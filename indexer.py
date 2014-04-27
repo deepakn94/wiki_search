@@ -45,8 +45,9 @@ def dump_index(index, file_name):
     keys = sorted(index.keys())
     with open(file_name, 'w') as f:
         for key in keys:
-            pairs = ['%s:%s'.encode('utf-8') % (pair[0], str(pair[1]))
+            pairs = ['%s:%d' % (pair[0], pair[1])
                      for pair in index[key]]
+            pairs = [pair.encode('utf-8') for pair in pairs]
             key = key.encode('utf-8')
             f.write('%s--%s\n' % (key, ','.join(pairs)))
 
@@ -55,12 +56,15 @@ def construct_index(file_name):
     with open(file_name, 'r') as f:
         index = defaultdict(list)
         for line in f:
-            line = line.strip()
-            [key, values] = line.split('--')
-            values = values.split(',')
-            values = [(value.split(':')[0], int(value.split(':')[1]))
-                      for value in values]
-            index[key].extend(values)
+            try:
+                line = line.strip()
+                [key, values] = line.split('--')
+                values = values.split(',')
+                values = [(value.split(':')[0], int(value.split(':')[1]))
+                          for value in values]
+                index[key].extend(values)
+            except:
+                continue
         return index
     return None
 
